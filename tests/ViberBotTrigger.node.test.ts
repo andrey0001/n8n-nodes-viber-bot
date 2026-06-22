@@ -14,12 +14,11 @@ describe('ViberBotTrigger Node', () => {
 		expect(triggerNode.description.webhooks).toHaveLength(1);
 	});
 
-	it('should register a webhook on create successfully with a default path', async () => {
+	it('should register a webhook on create successfully', async () => {
 		const mockContext: any = {
-			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/viber-bot'),
+			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid/viber-bot'),
 			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
 				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
-				if (paramNameValue === 'path') return 'viber-bot';
 				return undefined;
 			}),
 			getNode: jest.fn(),
@@ -36,36 +35,7 @@ describe('ViberBotTrigger Node', () => {
 			method: 'POST',
 			url: 'https://chatapi.viber.com/pa/set_webhook',
 			body: {
-				url: 'https://n8n.test/webhook/viber-bot',
-				event_types: ['delivered', 'seen'],
-			},
-			json: true,
-		});
-	});
-
-	it('should register a webhook on create successfully with a custom path', async () => {
-		const mockContext: any = {
-			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/custom-name'),
-			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
-				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
-				if (paramNameValue === 'path') return 'custom-name';
-				return undefined;
-			}),
-			getNode: jest.fn(),
-			helpers: {
-				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 0, status_message: 'ok' }),
-			},
-		};
-
-		const result = await triggerNode.webhookMethods.default.create.call(mockContext);
-
-		expect(result).toBe(true);
-		expect(mockContext.helpers.httpRequestWithAuthentication).toHaveBeenCalledTimes(1);
-		expect(mockContext.helpers.httpRequestWithAuthentication).toHaveBeenCalledWith('viberBotApi', {
-			method: 'POST',
-			url: 'https://chatapi.viber.com/pa/set_webhook',
-			body: {
-				url: 'https://n8n.test/webhook/custom-name',
+				url: 'https://n8n.test/webhook/some-uuid/viber-bot',
 				event_types: ['delivered', 'seen'],
 			},
 			json: true,
@@ -74,10 +44,9 @@ describe('ViberBotTrigger Node', () => {
 
 	it('should throw an error on create if Viber returns a non-zero status', async () => {
 		const mockContext: any = {
-			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/viber-bot'),
+			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid/viber-bot'),
 			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
 				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
-				if (paramNameValue === 'path') return 'viber-bot';
 				return undefined;
 			}),
 			getNode: jest.fn().mockReturnValue({ name: 'viberBotTrigger' }),

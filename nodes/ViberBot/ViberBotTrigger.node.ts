@@ -35,20 +35,11 @@ export class ViberBotTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				responseMode: 'onReceived',
-				path: '={{$parameter["path"]}}',
+				path: '={{$workflow.id}}',
 				isFullPath: true,
 			},
 		],
 		properties: [
-			{
-				displayName: 'Webhook Path',
-				name: 'path',
-				type: 'string',
-				default: 'viber-bot',
-				placeholder: 'viber-bot',
-				required: true,
-				description: 'The custom path segment of your webhook URL. Must be unique if you run multiple Viber bots. IMPORTANT: If you change this, you MUST save the workflow before clicking "Listen for Test Event" or activating it.',
-			},
 			{
 				displayName: 'Event Types',
 				name: 'eventTypes',
