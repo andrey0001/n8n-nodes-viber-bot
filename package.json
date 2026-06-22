@@ -1,10 +1,10 @@
 {
 	"name": "n8n-nodes-viber-bot",
 	"version": "1.0.0",
-	"description": "n8n community node for Viber Bot API",
+	"description": "n8n community node for Viber Bot API (https://github.com/andrey0001/n8n-nodes-viber-bot)",
 	"license": "MIT",
 	"author": {
-		"name": "Shad"
+		"name": "Andrey Sorokin (aka shadow_alone)"
 	},
 	"keywords": [
 		"n8n-community-node-package"
@@ -17,6 +17,7 @@
 		"lint": "n8n-node lint",
 		"lint:fix": "n8n-node lint --fix",
 		"test": "jest",
+		"release": "n8n-node release",
 		"prepublishOnly": "n8n-node prerelease"
 	},
 	"files": [
