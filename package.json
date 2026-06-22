@@ -1,0 +1,47 @@
+{
+	"name": "n8n-nodes-viber-bot",
+	"version": "1.0.0",
+	"description": "n8n community node for Viber Bot API",
+	"license": "MIT",
+	"author": {
+		"name": "Shad"
+	},
+	"keywords": [
+		"n8n-community-node-package"
+	],
+	"main": "dist/index.js",
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"test": "jest",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/ViberBotApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/ViberBot/ViberBot.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"@types/jest": "^30.0.0",
+		"eslint": "^9.29.0",
+		"jest": "^30.4.2",
+		"prettier": "^3.2.5",
+		"ts-jest": "^29.4.11",
+		"typescript": "^5.3.3"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
