@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-viber-bot",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "n8n community node for Viber Bot API (https://github.com/andrey0001/n8n-nodes-viber-bot)",
 	"license": "MIT",
 	"author": {
@@ -34,7 +34,8 @@
 			"dist/credentials/ViberBotApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/ViberBot/ViberBot.node.js"
+			"dist/nodes/ViberBot/ViberBot.node.js",
+			"dist/nodes/ViberBot/ViberBotTrigger.node.js"
 		]
 	},
 	"devDependencies": {

@@ -22,6 +22,7 @@ export function createMockExecuteFunctions(options: MockOptions = {}): IExecuteF
 			}
 			return fallback;
 		}),
+		getNode: jest.fn().mockReturnValue({ name: 'viberBot' }),
 		continueOnFail: jest.fn().mockReturnValue(continueOnFail),
 		helpers: {},
 	};

@@ -227,6 +227,113 @@ describe('ViberBot Node', () => {
 		});
 	});
 
+	it('should send a rich media carousel message successfully', async () => {
+		const mockResponse = { status: 0, status_message: 'ok' };
+		const richMediaObj = {
+			Type: 'rich_media',
+			ButtonsGroupColumns: 6,
+			ButtonsGroupRows: 7,
+			Buttons: [{ ActionType: 'reply', ActionBody: 'click', Text: 'Click Me' }],
+		};
+
+		const mockExecuteFunctions = createMockExecuteFunctions({
+			nodeParameters: {
+				resource: 'message',
+				operation: 'send',
+				receiver: 'user-viber-id-123',
+				messageType: 'rich_media',
+				richMedia: JSON.stringify(richMediaObj),
+				additionalFields: {
+					minApiVersion: 7,
+				},
+			},
+			httpRequestResponse: mockResponse,
+		});
+
+		const result = await node.execute.call(mockExecuteFunctions);
+
+		expect(result[0][0].json).toEqual(mockResponse);
+
+		const mockCall = mockExecuteFunctions.helpers.httpRequestWithAuthentication as jest.Mock;
+		const [, requestOptions] = mockCall.mock.calls[0];
+
+		expect(requestOptions.body).toEqual({
+			type: 'rich_media',
+			receiver: 'user-viber-id-123',
+			min_api_version: 7,
+			rich_media: richMediaObj,
+		});
+	});
+
+	it('should throw an error for invalid rich media JSON', async () => {
+		const mockExecuteFunctions = createMockExecuteFunctions({
+			nodeParameters: {
+				resource: 'message',
+				operation: 'send',
+				receiver: 'user-viber-id-123',
+				messageType: 'rich_media',
+				richMedia: '{ invalid-json }',
+			},
+		});
+
+		await expect(node.execute.call(mockExecuteFunctions)).rejects.toThrow('Invalid Rich Media JSON');
+	});
+
+	it('should attach a keyboard JSON to a text message successfully', async () => {
+		const mockResponse = { status: 0, status_message: 'ok' };
+		const keyboardObj = {
+			Type: 'keyboard',
+			Buttons: [{ ActionType: 'reply', ActionBody: 'reply1', Text: 'Reply 1' }],
+		};
+
+		const mockExecuteFunctions = createMockExecuteFunctions({
+			nodeParameters: {
+				resource: 'message',
+				operation: 'send',
+				receiver: 'user-viber-id-123',
+				messageType: 'text',
+				text: 'Choose an option:',
+				additionalFields: {
+					keyboard: JSON.stringify(keyboardObj),
+					minApiVersion: 7,
+				},
+			},
+			httpRequestResponse: mockResponse,
+		});
+
+		const result = await node.execute.call(mockExecuteFunctions);
+
+		expect(result[0][0].json).toEqual(mockResponse);
+
+		const mockCall = mockExecuteFunctions.helpers.httpRequestWithAuthentication as jest.Mock;
+		const [, requestOptions] = mockCall.mock.calls[0];
+
+		expect(requestOptions.body).toEqual({
+			type: 'text',
+			receiver: 'user-viber-id-123',
+			text: 'Choose an option:',
+			keyboard: keyboardObj,
+			min_api_version: 7,
+		});
+	});
+
+	it('should throw an error for invalid keyboard JSON', async () => {
+		const mockExecuteFunctions = createMockExecuteFunctions({
+			nodeParameters: {
+				resource: 'message',
+				operation: 'send',
+				receiver: 'user-viber-id-123',
+				messageType: 'text',
+				text: 'Hello',
+				additionalFields: {
+					keyboard: '{ bad-json }',
+				},
+			},
+		});
+
+		await expect(node.execute.call(mockExecuteFunctions)).rejects.toThrow('Invalid Viber Keyboard JSON');
+	});
+
 	it('should continue on fail if continueOnFail is true', async () => {
 		const mockExecuteFunctions = createMockExecuteFunctions({
 			nodeParameters: {

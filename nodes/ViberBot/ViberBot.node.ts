@@ -302,6 +302,7 @@ export class ViberBot implements INodeType {
 					{ name: 'File', value: 'file' },
 					{ name: 'Location', value: 'location' },
 					{ name: 'Picture', value: 'picture' },
+					{ name: 'Rich Media', value: 'rich_media' },
 					{ name: 'Sticker', value: 'sticker' },
 					{ name: 'Text', value: 'text' },
 					{ name: 'URL', value: 'url' },
@@ -375,6 +376,23 @@ export class ViberBot implements INodeType {
 				},
 				default: '',
 				description: 'The URL of the picture thumbnail (must be HTTPS, JPEG/PNG, max 100kb)',
+			},
+
+			// Message -> Send/Broadcast -> Rich Media JSON
+			{
+				displayName: 'Rich Media JSON',
+				name: 'richMedia',
+				type: 'string',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['message'],
+						operation: ['send', 'broadcast'],
+						messageType: ['rich_media'],
+					},
+				},
+				default: '',
+				description: 'The rich media JSON object (carousel cards and buttons) to send',
 			},
 
 			// Message -> Send/Broadcast -> File Size (for Video, File)
@@ -533,11 +551,11 @@ export class ViberBot implements INodeType {
 				},
 				options: [
 					{
-						displayName: 'Sender Name',
-						name: 'senderName',
-						type: 'string',
-						default: '',
-						description: 'The name of the sender as it will appear in the chat (max 28 characters)',
+						displayName: 'Min API Version',
+						name: 'minApiVersion',
+						type: 'number',
+						default: 7,
+						description: 'Minimum API version supported by the client (required if sending Keyboard or Rich Media)',
 					},
 					{
 						displayName: 'Sender Avatar',
@@ -547,11 +565,25 @@ export class ViberBot implements INodeType {
 						description: 'The URL of the sender avatar image',
 					},
 					{
+						displayName: 'Sender Name',
+						name: 'senderName',
+						type: 'string',
+						default: '',
+						description: 'The name of the sender as it will appear in the chat (max 28 characters)',
+					},
+					{
 						displayName: 'Tracking Data',
 						name: 'trackingData',
 						type: 'string',
 						default: '',
 						description: 'Custom tracking data that will be sent back with the user responses',
+					},
+					{
+						displayName: 'Viber Keyboard (JSON)',
+						name: 'keyboard',
+						type: 'string',
+						default: '',
+						description: 'Custom Viber Keyboard JSON array or object of buttons to attach to the message',
 					},
 				],
 			},
@@ -642,6 +674,21 @@ export class ViberBot implements INodeType {
 							body.tracking_data = additionalFields.trackingData;
 						}
 
+						// Min API Version support
+						if (additionalFields.minApiVersion !== undefined) {
+							body.min_api_version = additionalFields.minApiVersion;
+						}
+
+						// Viber Keyboard support
+						if (additionalFields.keyboard) {
+							const keyboardRaw = additionalFields.keyboard as string;
+							try {
+								body.keyboard = JSON.parse(keyboardRaw);
+							} catch {
+								throw new NodeOperationError(this.getNode(), 'Invalid Viber Keyboard JSON. Please ensure it is a valid JSON object or array.', { itemIndex: i });
+							}
+						}
+
 						// Type-specific details mapping
 						if (messageType === 'text') {
 							body.text = this.getNodeParameter('text', i) as string;
@@ -654,6 +701,13 @@ export class ViberBot implements INodeType {
 							const thumbnail = this.getNodeParameter('thumbnail', i, '') as string;
 							if (thumbnail) {
 								body.thumbnail = thumbnail;
+							}
+						} else if (messageType === 'rich_media') {
+							const richMediaRaw = this.getNodeParameter('richMedia', i) as string;
+							try {
+								body.rich_media = JSON.parse(richMediaRaw);
+							} catch {
+								throw new NodeOperationError(this.getNode(), 'Invalid Rich Media JSON. Please ensure it is a valid JSON object.', { itemIndex: i });
 							}
 						} else if (messageType === 'video') {
 							body.media = this.getNodeParameter('media', i) as string;
