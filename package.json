@@ -1,13 +1,17 @@
 {
 	"name": "n8n-nodes-viber-bot",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "n8n community node for Viber Bot API (https://github.com/andrey0001/n8n-nodes-viber-bot)",
 	"license": "MIT",
 	"author": {
 		"name": "Andrey Sorokin (aka shadow_alone)"
 	},
 	"keywords": [
-		"n8n-community-node-package"
+		"n8n-community-node-package",
+    "n8n-nodes-viber-bot",
+    "viber-bot",
+    "viberbot",
+    "viber"
 	],
 	"main": "dist/index.js",
 	"scripts": {
