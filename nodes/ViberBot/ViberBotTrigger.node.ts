@@ -35,7 +35,8 @@ export class ViberBotTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				responseMode: 'onReceived',
-				path: '',
+				path: '={{$workflow.id}}',
+				isFullPath: true,
 			},
 		],
 		properties: [
@@ -64,10 +65,7 @@ export class ViberBotTrigger implements INodeType {
 			},
 
 			async create(this: IHookFunctions): Promise<boolean> {
-				let webhookUrl = this.getNodeWebhookUrl('default');
-				if (webhookUrl && webhookUrl.endsWith('/')) {
-					webhookUrl = webhookUrl.slice(0, -1);
-				}
+				const webhookUrl = this.getNodeWebhookUrl('default');
 				const eventTypes = this.getNodeParameter('eventTypes') as string[];
 
 				const body: IDataObject = {

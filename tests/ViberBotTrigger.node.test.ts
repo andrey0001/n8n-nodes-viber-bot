@@ -14,9 +14,9 @@ describe('ViberBotTrigger Node', () => {
 		expect(triggerNode.description.webhooks).toHaveLength(1);
 	});
 
-	it('should register a webhook on create successfully and strip trailing slash', async () => {
+	it('should register a webhook on create successfully', async () => {
 		const mockContext: any = {
-			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid/'),
+			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid'),
 			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
 				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
 				return undefined;
@@ -35,7 +35,7 @@ describe('ViberBotTrigger Node', () => {
 			method: 'POST',
 			url: 'https://chatapi.viber.com/pa/set_webhook',
 			body: {
-				url: 'https://n8n.test/webhook/some-uuid', // Suffix must be stripped!
+				url: 'https://n8n.test/webhook/some-uuid', // Must be exactly the clean UUID-only url
 				event_types: ['delivered', 'seen'],
 			},
 			json: true,
@@ -44,7 +44,7 @@ describe('ViberBotTrigger Node', () => {
 
 	it('should throw an error on create if Viber returns a non-zero status', async () => {
 		const mockContext: any = {
-			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid/'),
+			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid'),
 			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
 				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
 				return undefined;
