@@ -35,7 +35,7 @@ export class ViberBotTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				responseMode: 'onReceived',
-				path: 'webhook',
+				path: '',
 			},
 		],
 		properties: [
