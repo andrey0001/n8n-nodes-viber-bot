@@ -283,7 +283,7 @@ export class ViberBot implements INodeType {
 					},
 				},
 				default: '',
-				description: 'A list of user IDs to receive the message (can be comma-separated or a JSON array of strings)',
+				description: 'A list of user IDs to receive the message (can be comma-separated, a JSON array of strings, or a native JavaScript Array)',
 			},
 
 			// Message -> Send/Broadcast -> Message Type
@@ -392,7 +392,7 @@ export class ViberBot implements INodeType {
 					},
 				},
 				default: '',
-				description: 'The rich media JSON object (carousel cards and buttons) to send',
+				description: 'The rich media JSON object (carousel cards and buttons) or a native JavaScript object to send',
 			},
 
 			// Message -> Send/Broadcast -> File Size (for Video, File)
@@ -583,7 +583,7 @@ export class ViberBot implements INodeType {
 						name: 'keyboard',
 						type: 'string',
 						default: '',
-						description: 'Custom Viber Keyboard JSON array or object of buttons to attach to the message',
+						description: 'Custom Viber Keyboard JSON array/object or native JavaScript object to attach to the message',
 					},
 				],
 			},
@@ -639,17 +639,25 @@ export class ViberBot implements INodeType {
 						if (operation === 'send') {
 							body.receiver = this.getNodeParameter('receiver', i) as string;
 						} else {
-							const broadcastListRaw = this.getNodeParameter('broadcastList', i) as string;
+							const broadcastListRaw = this.getNodeParameter('broadcastList', i);
 							let broadcastList: string[] = [];
-							try {
-								if (broadcastListRaw.startsWith('[') && broadcastListRaw.endsWith(']')) {
-									broadcastList = JSON.parse(broadcastListRaw) as string[];
-								} else {
+
+							if (Array.isArray(broadcastListRaw)) {
+								broadcastList = broadcastListRaw.map(String);
+							} else if (typeof broadcastListRaw === 'string') {
+								try {
+									if (broadcastListRaw.startsWith('[') && broadcastListRaw.endsWith(']')) {
+										broadcastList = JSON.parse(broadcastListRaw) as string[];
+									} else {
+										broadcastList = broadcastListRaw.split(',').map(s => s.trim()).filter(Boolean);
+									}
+								} catch {
 									broadcastList = broadcastListRaw.split(',').map(s => s.trim()).filter(Boolean);
 								}
-							} catch {
-								broadcastList = broadcastListRaw.split(',').map(s => s.trim()).filter(Boolean);
+							} else if (broadcastListRaw) {
+								broadcastList = [String(broadcastListRaw)];
 							}
+
 							body.broadcast_list = broadcastList;
 						}
 
@@ -681,11 +689,15 @@ export class ViberBot implements INodeType {
 
 						// Viber Keyboard support
 						if (additionalFields.keyboard) {
-							const keyboardRaw = additionalFields.keyboard as string;
-							try {
-								body.keyboard = JSON.parse(keyboardRaw);
-							} catch {
-								throw new NodeOperationError(this.getNode(), 'Invalid Viber Keyboard JSON. Please ensure it is a valid JSON object or array.', { itemIndex: i });
+							const keyboardRaw = additionalFields.keyboard;
+							if (typeof keyboardRaw === 'object' && keyboardRaw !== null) {
+								body.keyboard = keyboardRaw;
+							} else if (typeof keyboardRaw === 'string') {
+								try {
+									body.keyboard = JSON.parse(keyboardRaw);
+								} catch {
+									throw new NodeOperationError(this.getNode(), 'Invalid Viber Keyboard JSON. Please ensure it is a valid JSON object or array.', { itemIndex: i });
+								}
 							}
 						}
 
@@ -703,11 +715,15 @@ export class ViberBot implements INodeType {
 								body.thumbnail = thumbnail;
 							}
 						} else if (messageType === 'rich_media') {
-							const richMediaRaw = this.getNodeParameter('richMedia', i) as string;
-							try {
-								body.rich_media = JSON.parse(richMediaRaw);
-							} catch {
-								throw new NodeOperationError(this.getNode(), 'Invalid Rich Media JSON. Please ensure it is a valid JSON object.', { itemIndex: i });
+							const richMediaRaw = this.getNodeParameter('richMedia', i);
+							if (typeof richMediaRaw === 'object' && richMediaRaw !== null) {
+								body.rich_media = richMediaRaw;
+							} else if (typeof richMediaRaw === 'string') {
+								try {
+									body.rich_media = JSON.parse(richMediaRaw);
+								} catch {
+									throw new NodeOperationError(this.getNode(), 'Invalid Rich Media JSON. Please ensure it is a valid JSON object.', { itemIndex: i });
+								}
 							}
 						} else if (messageType === 'video') {
 							body.media = this.getNodeParameter('media', i) as string;

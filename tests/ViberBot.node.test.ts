@@ -334,6 +334,64 @@ describe('ViberBot Node', () => {
 		await expect(node.execute.call(mockExecuteFunctions)).rejects.toThrow('Invalid Viber Keyboard JSON');
 	});
 
+	it('should broadcast a file message successfully with a native array of receivers', async () => {
+		const mockResponse = { status: 0, status_message: 'ok' };
+
+		const mockExecuteFunctions = createMockExecuteFunctions({
+			nodeParameters: {
+				resource: 'message',
+				operation: 'broadcast',
+				broadcastList: ['user-a', 'user-b'],
+				messageType: 'file',
+				media: 'https://example.com/doc.pdf',
+				size: 1048576,
+				fileName: 'document.pdf',
+			},
+			httpRequestResponse: mockResponse,
+		});
+
+		const result = await node.execute.call(mockExecuteFunctions);
+
+		expect(result[0][0].json).toEqual(mockResponse);
+
+		const mockCall = mockExecuteFunctions.helpers.httpRequestWithAuthentication as jest.Mock;
+		const [, requestOptions] = mockCall.mock.calls[mockCall.mock.calls.length - 1];
+
+		expect(requestOptions.body.broadcast_list).toEqual(['user-a', 'user-b']);
+	});
+
+	it('should attach a keyboard successfully with a native object', async () => {
+		const mockResponse = { status: 0, status_message: 'ok' };
+		const keyboardObj = {
+			Type: 'keyboard',
+			Buttons: [{ ActionType: 'reply', ActionBody: 'reply1', Text: 'Reply 1' }],
+		};
+
+		const mockExecuteFunctions = createMockExecuteFunctions({
+			nodeParameters: {
+				resource: 'message',
+				operation: 'send',
+				receiver: 'user-viber-id-123',
+				messageType: 'text',
+				text: 'Choose an option:',
+				additionalFields: {
+					keyboard: keyboardObj,
+					minApiVersion: 7,
+				},
+			},
+			httpRequestResponse: mockResponse,
+		});
+
+		const result = await node.execute.call(mockExecuteFunctions);
+
+		expect(result[0][0].json).toEqual(mockResponse);
+
+		const mockCall = mockExecuteFunctions.helpers.httpRequestWithAuthentication as jest.Mock;
+		const [, requestOptions] = mockCall.mock.calls[mockCall.mock.calls.length - 1];
+
+		expect(requestOptions.body.keyboard).toEqual(keyboardObj);
+	});
+
 	it('should continue on fail if continueOnFail is true', async () => {
 		const mockExecuteFunctions = createMockExecuteFunctions({
 			nodeParameters: {

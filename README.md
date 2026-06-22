@@ -1,35 +1,45 @@
 # n8n-nodes-viber-bot
 
-This is an n8n community node that allows you to seamlessly integrate the **Viber Bot REST API** with your workflows. It provides native support for messaging, broadcasting, registration of webhooks, and retrieval of account and subscriber details.
+This is an n8n community node package that allows you to seamlessly integrate the **Viber Bot REST API** with your workflows. It provides native support for sending messages, broadcasting, automatic webhook lifecycle management, and subscriber profile lookups.
+
+The package includes two core nodes:
+1.  **Viber Bot (Action Node):** Send messages, broadcast to groups, fetch account details, and look up subscribers.
+2.  **Viber Bot Trigger (Webhook Node):** Automatically registers a clean, standard, trailing-slash-free webhook endpoint with Viber to listen for incoming messages and events in real-time.
 
 ---
 
 ## Features
 
-### 1. Message Management
-*   **Send Message:** Dispatch individual messages to subscribed Viber users.
-*   **Broadcast Message:** Send the same message to up to 300 subscriber IDs simultaneously in a single request.
-*   **Message Types Supported:**
-    *   **Text:** Simple text messages up to 7,000 characters.
-    *   **Picture:** High-quality image URL (HTTPS only), optional text caption, and custom thumbnail override.
-    *   **Video:** Video URL (HTTPS), file size in bytes, and optional duration constraint.
-    *   **File:** Any document or media file URL (HTTPS), file size in bytes, and explicit file name.
+### 1. Webhook Lifecycle Management (Viber Bot Trigger)
+*   **Zero-Configuration Setup:** Simply add the **Viber Bot Trigger** to your canvas. When you **Publish (Activate)** the workflow, n8n automatically registers your clean webhook endpoint with Viber's servers. When deactivated, it automatically unregisters.
+*   **Clean Standard Endpoints:** Uses n8n's standard, trailing-slash-free UUID-only URL format, completely avoiding redundant trailing slashes and collisions:
+    *   **Test URL:** `https://my-domain.com/webhook-test/<uuid>`
+    *   **Production URL:** `https://my-domain.com/webhook/<uuid>`
+*   **Automatic Handshake Verification:** Automatically intercepts and answers Viber's webhook handshake validation requests (`event: 'webhook'`) with a silent `200 OK` response so your n8n workflow only triggers on actual user interactions (messages, subscriptions, etc.).
+
+### 2. Message Operations (Viber Bot)
+*   **Send Message:** Deliver messages to subscribed users.
+*   **Broadcast Message:** Send a single message to multiple subscribed users in one API call.
+*   **Supported Message Types:**
+    *   **Text:** Simple text strings (up to 7,000 characters).
+    *   **Picture:** HTTPS image URLs with optional captions and thumbnail previews.
+    *   **Video:** Video URLs with file sizes and playback durations.
+    *   **File:** Any file URL with name and byte size details.
     *   **Location:** Geographical coordinates (latitude and longitude).
     *   **Contact:** Direct contact details (name and phone number).
     *   **Sticker:** Native Viber sticker ID.
-    *   **URL:** Clickable link URL.
-*   **Advanced Message Parameters:** Include custom tracking data (`trackingData`) and display profile overrides (`senderName` and `senderAvatar`).
+    *   **URL:** Clickable direct link.
+    *   **Rich Media:** Scrollable, interactive carousels of cards, images, and buttons.
 
-### 2. Webhook Settings
-*   **Set Webhook:** Register an HTTPS callback URL to receive real-time Viber events.
-*   **Granular Events:** Subscribe to any combination of `conversation_started`, `delivered`, `seen`, `failed`, `subscribed`, and `unsubscribed`.
-*   **Privacy Parameters:** Toggle whether the sender's name (`sendName`) and photo (`sendPhoto`) are delivered in callback payloads.
+### 3. Rich User Interactivity
+*   **Interactive Viber Keyboards:** Attach custom, fully formatted grid button keyboards (JSON arrays/objects) to any outgoing message, giving users clickable choices in their chat window.
+*   **Min API Version Constraints:** Automatically sets the minimum Viber API version constraints required to display advanced elements like custom Keyboards and Rich Media carousels.
+*   **Sender Profiling:** Customize the profile name (`senderName`) and avatar image (`senderAvatar`) for outgoing messages dynamically on a per-node level.
 
-### 3. Account Profile
-*   **Get Account Info:** Instantly fetch details of your Viber Bot account, including subscriber count, active webhook status, and bot name/uri.
-
-### 4. Subscriber Management
-*   **Get User Details:** Retrieve private profile metadata for a specific user (name, primary device OS, device type, language, and country code).
+### 4. Advanced Variable Robustness
+Built specifically for power-user workflows:
+*   **Native Array Support:** Input a native JavaScript Array of strings directly into the `Broadcast List` (e.g. `{{$json.viber_ids}}` from a Postgres or Airtable node), and the node will parse it seamlessly.
+*   **Native Object Support:** Pass dynamic JSON objects directly from a Code node or HTTP Request node into the `Viber Keyboard (JSON)` and `Rich Media JSON` parameters. The node automatically handles objects directly, avoiding tedious stringification.
 
 ---
 
@@ -42,12 +52,14 @@ n8n-nodes-viber-bot/
 │   └── viber.svg                         # Polished logo for credentials modal
 ├── nodes/
 │   └── ViberBot/
-│       ├── ViberBot.node.ts              # Custom Node definition & parameter mapping
+│       ├── ViberBot.node.ts              # Upgraded Action Node (sending, broadcasting)
+│       ├── ViberBotTrigger.node.ts       # Upgraded Trigger Node (automatic webhooks)
 │       └── viber.svg                     # Polished logo for n8n workspace canvas
 ├── tests/
 │   ├── mocks/
 │   │   └── mockExecuteFunctions.ts       # n8n runtime execution mock helper
-│   └── ViberBot.node.test.ts             # Extensive Jest unit tests
+│   ├── ViberBot.node.test.ts             # Extensive Action Node tests (including robust objects)
+│   └── ViberBotTrigger.node.test.ts      # Webhook Lifecycle trigger node tests
 ├── package.json                          # Package scripts & n8n entry configurations
 ├── tsconfig.json                         # TypeScript compilation settings
 ├── eslint.config.mjs                     # ESLint configuration file
@@ -81,7 +93,7 @@ To load and test this node in a local n8n instance before releasing it:
     ```
 
 4.  **Restart n8n:**
-    Launch your local n8n process. The workspace canvas will load the custom "Viber Bot" node automatically.
+    Launch your local n8n process. The workspace canvas will load the custom "Viber Bot" and "Viber Bot Trigger" nodes automatically.
 
 ---
 
@@ -96,40 +108,25 @@ To load and test this node in a local n8n instance before releasing it:
 
 ## Operations Guide
 
-### **Resource: Message**
+### **Node: Viber Bot Trigger**
+This node acts as a webhook receiver. It does not require any manual endpoint path configurations.
+*   **Event Types:** Optionally select which events trigger your workflow. Defaults to all events: `conversation_started`, `delivered`, `seen`, `failed`, `subscribed`, and `unsubscribed`.
+
+---
+
+### **Node: Viber Bot (Action)**
 
 #### **Operation: Send**
 *   **Receiver:** The unique Viber subscriber ID (string, required).
-*   **Message Type:** Select between `Contact`, `File`, `Location`, `Picture`, `Sticker`, `Text`, `URL`, and `Video`.
+*   **Message Type:** Select between `Contact`, `File`, `Location`, `Picture`, `Rich Media`, `Sticker`, `Text`, `URL`, and `Video`.
 *   **Additional Fields:**
     *   *Sender Name:* Custom profile name shown in chat (max 28 characters).
     *   *Sender Avatar:* Custom profile photo URL (must be HTTPS, JPEG/PNG).
     *   *Tracking Data:* Custom metadata returned inside user callback reactions (max 4,096 characters).
+    *   *Viber Keyboard (JSON):* Custom grid buttons (JSON array/object or native object) to attach.
 
 #### **Operation: Broadcast**
-*   **Broadcast List:** A comma-separated list of user IDs or a raw JSON array of user ID strings (e.g., `["user1", "user2"]`). Maximum of 300 IDs per request.
-
----
-
-### **Resource: Webhook**
-
-#### **Operation: Set**
-*   **URL:** The webhook endpoint to receive notifications (must be HTTPS, required).
-*   **Event Types:** Select which events trigger callbacks. Defaults to all standard viber events.
-
----
-
-### **Resource: Account**
-
-#### **Operation: Get**
-*   Fetches public information about the bot account. No parameters are required.
-
----
-
-### **Resource: User**
-
-#### **Operation: Get**
-*   **User ID:** The unique Viber subscriber ID to fetch metadata for (string, required).
+*   **Broadcast List:** A list of user IDs to receive the message. Can be a comma-separated string, a raw JSON array string, or a native JavaScript Array (e.g. `{{$json.ids_array}}`). Maximum of 300 IDs per request.
 
 ---
 
