@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-viber-bot",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "n8n community node for Viber Bot API (https://github.com/andrey0001/n8n-nodes-viber-bot)",
 	"license": "MIT",
 	"author": {
@@ -11,7 +11,9 @@
     "n8n-nodes-viber-bot",
     "viber-bot",
     "viberbot",
-    "viber"
+    "viber",
+    "bot",
+    "n8n"
 	],
 	"main": "dist/index.js",
 	"scripts": {

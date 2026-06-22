@@ -64,7 +64,10 @@ export class ViberBotTrigger implements INodeType {
 			},
 
 			async create(this: IHookFunctions): Promise<boolean> {
-				const webhookUrl = this.getNodeWebhookUrl('default');
+				let webhookUrl = this.getNodeWebhookUrl('default');
+				if (webhookUrl && webhookUrl.endsWith('/')) {
+					webhookUrl = webhookUrl.slice(0, -1);
+				}
 				const eventTypes = this.getNodeParameter('eventTypes') as string[];
 
 				const body: IDataObject = {
@@ -73,12 +76,16 @@ export class ViberBotTrigger implements INodeType {
 				};
 
 				try {
-					await this.helpers.httpRequestWithAuthentication.call(this, 'viberBotApi', {
+					const responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'viberBotApi', {
 						method: 'POST',
 						url: 'https://chatapi.viber.com/pa/set_webhook',
 						body,
 						json: true,
-					});
+					}) as IDataObject;
+
+					if (responseData && responseData.status !== 0) {
+						throw new NodeOperationError(this.getNode(), `Viber API registration failed: ${responseData.status_message} (status: ${responseData.status}). Please ensure your n8n WEBHOOK_URL is using HTTPS and is accessible over the internet.`);
+					}
 				} catch (error) {
 					throw new NodeOperationError(this.getNode(), error as Error);
 				}
@@ -88,14 +95,18 @@ export class ViberBotTrigger implements INodeType {
 
 			async delete(this: IHookFunctions): Promise<boolean> {
 				try {
-					await this.helpers.httpRequestWithAuthentication.call(this, 'viberBotApi', {
+					const responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'viberBotApi', {
 						method: 'POST',
 						url: 'https://chatapi.viber.com/pa/set_webhook',
 						body: {
 							url: '',
 						},
 						json: true,
-					});
+					}) as IDataObject;
+
+					if (responseData && responseData.status !== 0) {
+						throw new NodeOperationError(this.getNode(), `Viber API webhook de-registration failed: ${responseData.status_message} (status: ${responseData.status}).`);
+					}
 				} catch (error) {
 					throw new NodeOperationError(this.getNode(), error as Error);
 				}

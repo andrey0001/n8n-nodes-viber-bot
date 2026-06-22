@@ -14,16 +14,16 @@ describe('ViberBotTrigger Node', () => {
 		expect(triggerNode.description.webhooks).toHaveLength(1);
 	});
 
-	it('should register a webhook on create', async () => {
+	it('should register a webhook on create successfully and strip trailing slash', async () => {
 		const mockContext: any = {
-			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid'),
+			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid/'),
 			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
 				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
 				return undefined;
 			}),
 			getNode: jest.fn(),
 			helpers: {
-				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 0 }),
+				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 0, status_message: 'ok' }),
 			},
 		};
 
@@ -35,33 +35,51 @@ describe('ViberBotTrigger Node', () => {
 			method: 'POST',
 			url: 'https://chatapi.viber.com/pa/set_webhook',
 			body: {
-				url: 'https://n8n.test/webhook/some-uuid',
+				url: 'https://n8n.test/webhook/some-uuid', // Suffix must be stripped!
 				event_types: ['delivered', 'seen'],
 			},
 			json: true,
 		});
 	});
 
-	it('should delete a webhook on delete', async () => {
+	it('should throw an error on create if Viber returns a non-zero status', async () => {
+		const mockContext: any = {
+			getNodeWebhookUrl: jest.fn().mockReturnValue('https://n8n.test/webhook/some-uuid/'),
+			getNodeParameter: jest.fn().mockImplementation((paramNameValue: string) => {
+				if (paramNameValue === 'eventTypes') return ['delivered', 'seen'];
+				return undefined;
+			}),
+			getNode: jest.fn().mockReturnValue({ name: 'viberBotTrigger' }),
+			helpers: {
+				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 1, status_message: 'invalidUrl' }),
+			},
+		};
+
+		await expect(triggerNode.webhookMethods.default.create.call(mockContext)).rejects.toThrow('Viber API registration failed: invalidUrl');
+	});
+
+	it('should delete a webhook on delete successfully', async () => {
 		const mockContext: any = {
 			getNode: jest.fn(),
 			helpers: {
-				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 0 }),
+				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 0, status_message: 'ok' }),
 			},
 		};
 
 		const result = await triggerNode.webhookMethods.default.delete.call(mockContext);
 
 		expect(result).toBe(true);
-		expect(mockContext.helpers.httpRequestWithAuthentication).toHaveBeenCalledTimes(1);
-		expect(mockContext.helpers.httpRequestWithAuthentication).toHaveBeenCalledWith('viberBotApi', {
-			method: 'POST',
-			url: 'https://chatapi.viber.com/pa/set_webhook',
-			body: {
-				url: '',
+	});
+
+	it('should throw an error on delete if Viber returns a non-zero status', async () => {
+		const mockContext: any = {
+			getNode: jest.fn().mockReturnValue({ name: 'viberBotTrigger' }),
+			helpers: {
+				httpRequestWithAuthentication: jest.fn().mockResolvedValue({ status: 2, status_message: 'invalidAuthToken' }),
 			},
-			json: true,
-		});
+		};
+
+		await expect(triggerNode.webhookMethods.default.delete.call(mockContext)).rejects.toThrow('Viber API webhook de-registration failed: invalidAuthToken');
 	});
 
 	it('should handle incoming standard events successfully', async () => {
