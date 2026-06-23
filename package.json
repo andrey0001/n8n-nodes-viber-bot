@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-viber-bot",
-	"version": "1.1.6",
+	"version": "1.1.7",
 	"description": "n8n community node for Viber Bot API (https://github.com/andrey0001/n8n-nodes-viber-bot)",
 	"license": "MIT",
 	"keywords": [
@@ -26,11 +26,11 @@
 	"main": "dist/index.js",
 
   "scripts": {
-    "build": "tsc && npm run copy:icons",
-    "copy:icons": "copyfiles -u 1 \"src/nodes/**/*.svg\" dist",
+    "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint src --ext .ts",
-    "lintfix": "eslint src --ext .ts --fix",
+    "test": "jest",
+    "lint": "eslint credentials nodes tests",
+    "lintfix": "eslint credentials nodes tests --fix",
     "prepublishOnly": "npm run build"
   },
 	"files": [
