@@ -1,5 +1,7 @@
 # n8n-nodes-viber-bot
 
+[![npm version](https://badge.fury.io/js/n8n-nodes-viber-bot.svg)](https://www.npmjs.com/package/n8n-nodes-viber-bot)
+
 This is an n8n community node package that allows you to seamlessly integrate the **Viber Bot REST API** with your workflows. It provides native support for sending messages, broadcasting, automatic webhook lifecycle management, and subscriber profile lookups.
 
 The package includes two core nodes:
